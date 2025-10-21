@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">02_ToDo App</string>
+
+    <string name="task_label">tast label</string>
+    <string name="task_placeholder">Tippe hier</string>
+    <string name="add">Add</string>
+    <string name="empty_state">Leer</string>
+    <string name="deleted_msg">Task gelöscht</string>
+    <string name="delete">Löschen</string>
+    <string name="undo">Rückgängig</string>
+    <string name="filter_all">Alle</string>
+    <string name="filter_open">Offen</string>
+    <string name="filter_done">Erledigt</string>
+    <string name="category">Kategorie</string>
+    <string name="pick_category">Kategorie wählen</string>
+    <string name="cat_personal">Persönlich</string>
+    <string name="cat_work">Arbeit</string>
+    <string name="cat_physical">Physisch</string>
+    <string name="cat_study">Studium</string>
+    <string name="cat_other">Sonstiges</string>
+    <string name="cat_personal_short">PER</string>
+    <string name="cat_work_short">ARB</string>
+    <string name="cat_physical_short">PHY</string>
+    <string name="cat_study_short">STU</string>
+    <string name="cat_other_short">SON</string>
+
+
+</resources>
