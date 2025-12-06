@@ -11,6 +11,7 @@ import com.example.a02_todoapp.data.local.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -32,6 +33,32 @@ class ToDoViewModel(app: Application) : AndroidViewModel(app) {
     // Liste aus der DB (Flow -> StateFlow)
     val tasks: StateFlow<List<Task>> =
         repo.tasks.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    init {
+        // Testdaten neu befüllen
+        viewModelScope.launch(Dispatchers.IO) {
+            val currentTasks = repo.tasks.first()
+            
+            // Alles löschen für sauberen Test-Start
+            currentTasks.forEach { task ->
+                repo.delete(task.id)
+            }
+
+            // 7 neue Aufgaben erstellen
+            val testTasks = listOf(
+                "Wichtigste Aufgabe starten" to Category.WORK,
+                "Mails checken & antworten" to Category.WORK,
+                "Team Meeting vorbereiten" to Category.WORK,
+                "Projektplan aktualisieren" to Category.WORK,
+                "Mittagspause genießen" to Category.OTHER,
+                "Code Review" to Category.WORK,
+                "Dokumentation schreiben" to Category.WORK
+            )
+            testTasks.forEach { (title, cat) ->
+                repo.add(title, cat)
+            }
+        }
+    }
 
     // 🔹 DIE Input-Funktion:
     fun onInputChange(v: String) {
