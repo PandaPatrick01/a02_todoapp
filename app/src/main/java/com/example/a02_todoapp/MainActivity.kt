@@ -1,5 +1,6 @@
 package com.example.a02_todoapp
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.a02_todoapp.data.local.ToDoViewModel
+import com.example.a02_todoapp.data.local.WeeklyGoalViewModel
 import com.example.a02_todoapp.ui.DayTaskScreen
 import com.example.a02_todoapp.ui.EveningClosureScreen
 import com.example.a02_todoapp.ui.FirstMoveScreen
@@ -21,8 +23,14 @@ import com.example.a02_todoapp.ui.MiddayResetScreen
 import com.example.a02_todoapp.ui.MorningConfirmationScreen
 import com.example.a02_todoapp.ui.MorningFocusScreen
 import com.example.a02_todoapp.ui.MorningIntroScreen
+import com.example.a02_todoapp.ui.PlanningLongTermScreen
+import com.example.a02_todoapp.ui.PlanningScreen
+import com.example.a02_todoapp.ui.PlanningWeeklyScreen
 import com.example.a02_todoapp.ui.TomorrowSetupScreen
 import com.example.a02_todoapp.ui.theme._02_ToDoAppTheme
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 // Enum für den einfachen Navigations-Flow
 enum class AppScreen {
@@ -35,23 +43,57 @@ enum class AppScreen {
     MIDDAY_RESET,
     EVENING_CLOSURE,
     TOMORROW_SETUP,
-    TODO_LIST
+    TODO_LIST,
+    PLANNING_OVERVIEW, // Neuer Screen für Planung
+    PLANNING_WEEKLY,   // Neuer Screen für Wochenplanung
+    PLANNING_LONGTERM  // Neuer Screen für Langzeitziele
 }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // SharedPreferences für "Erster Start am Tag" Logik
+        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val todayDate = sdf.format(Date())
+        
+        val lastRunDate = prefs.getString("last_run_date", "")
+        val storedFocus = prefs.getString("selected_focus", "")
+        
+        // Prüfung: Ist das der erste Start heute?
+        val isFirstRunToday = lastRunDate != todayDate
+
+        // Start-Screen festlegen
+        val startScreen = if (isFirstRunToday) {
+            // Neuer Tag -> Alles von vorne
+            // Wir speichern das neue Datum erst, wenn der User wirklich interagiert hat oder jetzt sofort.
+            // Speichern wir es jetzt, damit beim nächsten Kill/Start heute der verkürzte Ablauf kommt.
+            prefs.edit().putString("last_run_date", todayDate).apply()
+            AppScreen.MORNING_INTRO
+        } else {
+            // Schon mal da gewesen -> Nur Spruch (Confirmation) zeigen, dann Tasks
+            // Wir brauchen aber einen gespeicherten Fokus, sonst Fallback auf Intro
+            if (!storedFocus.isNullOrEmpty()) {
+                AppScreen.MORNING_CONFIRMATION
+            } else {
+                AppScreen.MORNING_INTRO
+            }
+        }
+
         setContent {
             _02_ToDoAppTheme {
                 // ViewModel beziehen
                 val vm: ToDoViewModel = viewModel()
+                val weeklyVm: WeeklyGoalViewModel = viewModel()
                 
                 // State für den aktuellen Screen
-                var currentScreen by remember { mutableStateOf(AppScreen.MORNING_INTRO) }
+                var currentScreen by remember { mutableStateOf(startScreen) }
                 
                 // State für die getroffene Fokus-Auswahl
-                var selectedFocus by remember { mutableStateOf("") }
+                // Falls wir im "Short-Cut"-Modus sind, laden wir den gespeicherten Fokus
+                var selectedFocus by remember { mutableStateOf(if (!isFirstRunToday) storedFocus ?: "" else "") }
 
                 Surface {
                     // Crossfade für weichen Übergang zwischen allen Screens
@@ -72,6 +114,9 @@ class MainActivity : ComponentActivity() {
                                 MorningFocusScreen(
                                     onFocusSelected = { focus ->
                                         selectedFocus = focus
+                                        // Fokus speichern für spätere Starts am gleichen Tag
+                                        prefs.edit().putString("selected_focus", focus).apply()
+                                        
                                         currentScreen = AppScreen.MORNING_CONFIRMATION
                                     }
                                 )
@@ -80,7 +125,14 @@ class MainActivity : ComponentActivity() {
                                 MorningConfirmationScreen(
                                     selection = selectedFocus,
                                     onFinish = {
-                                        currentScreen = AppScreen.FIRST_MOVE
+                                        // Weichenstellung:
+                                        if (isFirstRunToday) {
+                                            // Normaler Ablauf: Weiter zu First Move
+                                            currentScreen = AppScreen.FIRST_MOVE
+                                        } else {
+                                            // Verkürzter Ablauf: Direkt zu den Tasks
+                                            currentScreen = AppScreen.DAY_TASK_LIST
+                                        }
                                     }
                                 )
                             }
@@ -102,10 +154,14 @@ class MainActivity : ComponentActivity() {
                             }
                             AppScreen.DAY_TASK_LIST -> {
                                 DayTaskScreen(
-                                    viewModel = vm, // ViewModel übergeben
+                                    viewModel = vm,
                                     onAllTasksDone = {
                                         // Wenn alle Aufgaben erledigt sind, weiter zum Midday Reset
                                         currentScreen = AppScreen.MIDDAY_RESET
+                                    },
+                                    onPlanningClick = {
+                                        // Navigation zum Planungs-Screen
+                                        currentScreen = AppScreen.PLANNING_OVERVIEW
                                     }
                                 )
                             }
@@ -132,6 +188,26 @@ class MainActivity : ComponentActivity() {
                             }
                             AppScreen.TODO_LIST -> {
                                 ToDoScreen(vm)
+                            }
+                            // --- NEUE SCREENS FÜR PLANUNG ---
+                            AppScreen.PLANNING_OVERVIEW -> {
+                                PlanningScreen(
+                                    onWeeklyPlanningClick = { currentScreen = AppScreen.PLANNING_WEEKLY },
+                                    onLongTermGoalsClick = { currentScreen = AppScreen.PLANNING_LONGTERM }
+                                )
+                            }
+                            AppScreen.PLANNING_WEEKLY -> {
+                                PlanningWeeklyScreen(
+                                    weeklyViewModel = weeklyVm,
+                                    onNewWeekClick = {
+                                        // Hier könnte man zur Detailansicht navigieren oder bleiben
+                                    }
+                                )
+                            }
+                            AppScreen.PLANNING_LONGTERM -> {
+                                PlanningLongTermScreen(
+                                    onBack = { currentScreen = AppScreen.PLANNING_OVERVIEW }
+                                )
                             }
                         }
                     }

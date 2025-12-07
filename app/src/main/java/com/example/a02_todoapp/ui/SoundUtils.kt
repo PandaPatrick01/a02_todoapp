@@ -8,11 +8,19 @@ object SoundUtils {
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
 
     fun playSuccessSound() {
-        // TONE_PROP_BEEP ist okay, aber TONE_SUP_CONFIRM ist oft freundlicher.
-        // Wir probieren TONE_SUP_PIP oder TONE_CDMA_ALERT_CALL_GUARD für "ding"
-        // TONE_PROP_ACK ist oft ein kurzes "Ping".
         try {
-            toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK) 
+            // HIER KANNST DU VERSCHIEDENE TÖNE TESTEN:
+            
+            // 1. TONE_SUP_CONFIRM (Aktuell) -> Standard Bestätigung "Ding"
+            // 2. TONE_CDMA_ALERT_CALL_GUARD -> Oft ein weicheres, melodisches "Tü-ding"
+            // 3. TONE_PROP_ACK -> Ein kurzes, hohes "Ping" (wie ein Sonar)
+            // 4. TONE_SUP_PIP -> Sehr kurzes "Pip"
+            // 5. TONE_CDMA_CONFIRM -> Alternative Bestätigung
+            // 6. TONE_SUP_RADIO_ACK -> Funkgerät-Bestätigung
+            
+            // Ändere die Konstante hier unten, um zu testen:
+            toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD)
+            
         } catch (e: Exception) {
             e.printStackTrace()
         }

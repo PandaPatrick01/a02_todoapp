@@ -44,15 +44,18 @@ class ToDoViewModel(app: Application) : AndroidViewModel(app) {
                 repo.delete(task.id)
             }
 
-            // 7 neue Aufgaben erstellen
+            // 10 neue Aufgaben quer durch alle Kategorien
             val testTasks = listOf(
-                "Wichtigste Aufgabe starten" to Category.WORK,
-                "Mails checken & antworten" to Category.WORK,
-                "Team Meeting vorbereiten" to Category.WORK,
-                "Projektplan aktualisieren" to Category.WORK,
-                "Mittagspause genießen" to Category.OTHER,
-                "Code Review" to Category.WORK,
-                "Dokumentation schreiben" to Category.WORK
+                "Morgen-Jogging (30 min)" to Category.PHYSICAL,
+                "E-Mails sortieren" to Category.WORK,
+                "Einkaufen für die Woche" to Category.PERSONAL,
+                "Kapitel 4 lernen" to Category.STUDY,
+                "Rechnung überweisen" to Category.OTHER,
+                "Yoga Session" to Category.PHYSICAL,
+                "Meeting Protokoll schreiben" to Category.WORK,
+                "Mama anrufen" to Category.PERSONAL,
+                "Vokabeln wiederholen" to Category.STUDY,
+                "Pflanzen gießen" to Category.OTHER
             )
             testTasks.forEach { (title, cat) ->
                 repo.add(title, cat)

@@ -161,7 +161,7 @@ fun CategoryPicker(
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier
                 .menuAnchor()
-                .width(120.dp)
+                .fillMaxWidth() // <-- HIER GEÄNDERT: von .width(300.dp) auf .fillMaxWidth()
         )
 
         ExposedDropdownMenu(
